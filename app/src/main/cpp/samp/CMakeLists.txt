@@ -3,12 +3,6 @@ project(samp)
 
 set(CMAKE_CXX_STANDARD 20)
 
-if(${ANDROID_ABI} STREQUAL "armeabi-v7a")
-    add_definitions(-DVER_x32=true)
-elseif(${ANDROID_ABI} STREQUAL "arm64-v8a")
-    add_definitions(-DVER_x32=false)
-endif()
-
 # Add source files
 file(GLOB_RECURSE SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/*.c*
