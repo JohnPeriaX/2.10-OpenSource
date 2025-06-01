@@ -1519,8 +1519,8 @@ int64 GetInputType(void)
     return 0LL;
 }
 
-int(*CAnimBlendNode__FindKeyFrame)(int, float, int, int);
-int CAnimBlendNode__FindKeyFrame_hook(int a1, float a2, int a3, int a4)
+int (*CAnimBlendNode__FindKeyFrame)(int64_t, float, int, int);
+int CAnimBlendNode__FindKeyFrame_hook(int64_t a1, float a2, int a3, int a4)
 {
     if (*(uintptr_t*)(a1 + 16))
     {
@@ -1534,22 +1534,21 @@ RwFrame* CClumpModelInfo_GetFrameFromId_Post(RwFrame* pFrameResult, RpClump* pCl
     if (pFrameResult)
         return pFrameResult;
 
-    uintptr_t calledFrom = 0;
-    __asm__ volatile ("mov %0, lr" : "=r" (calledFrom));
+    uintptr_t calledFrom = reinterpret_cast<uintptr_t>(__builtin_return_address(0));
     calledFrom -= g_libGTASA;
 
     if (calledFrom == 0x00515708                // CVehicle::SetWindowOpenFlag
         || calledFrom == 0x00515730             // CVehicle::ClearWindowOpenFlag
         || calledFrom == 0x00338698             // CVehicleModelInfo::GetOriginalCompPosition
         || calledFrom == 0x00338B2C)            // CVehicleModelInfo::CreateInstance
-        return nullptr;
-
-    for (uint i = 2; i < 40; i++)
     {
-        RwFrame* pNewFrameResult = nullptr;
-        uint     uiNewId = id + (i / 2) * ((i & 1) ? -1 : 1);
+        return nullptr;
+    }
 
-        pNewFrameResult = ((RwFrame * (*)(RpClump * pClump, int id))(g_libGTASA + (VER_2_1 ? 0x003856D0 : 0x00335CC0) + 1))(pClump, i);
+    for (uint32_t i = 2; i < 40; i++)
+    {
+        uint32_t uiNewId = id + (i / 2) * ((i & 1) ? -1 : 1);
+        RwFrame* pNewFrameResult = ((RwFrame* (*)(RpClump*, int))(g_libGTASA + 0x0045BE40))(pClump, uiNewId);
 
         if (pNewFrameResult)
         {
@@ -1559,6 +1558,7 @@ RwFrame* CClumpModelInfo_GetFrameFromId_Post(RwFrame* pFrameResult, RpClump* pCl
 
     return nullptr;
 }
+
 RwFrame* (*CClumpModelInfo_GetFrameFromId)(RpClump*, int);
 RwFrame* CClumpModelInfo_GetFrameFromId_hook(RpClump* a1, int a2)
 {
@@ -1858,10 +1858,8 @@ void InstallHooks()
 
     CHook::Redirect("_ZN4CHID12GetInputTypeEv", &GetInputType);
 
-#if VER_x32
     CHook::InlineHook("_ZN14CAnimBlendNode12FindKeyFrameEf", &CAnimBlendNode__FindKeyFrame_hook, &CAnimBlendNode__FindKeyFrame);
     CHook::InlineHook("_ZN15CClumpModelInfo14GetFrameFromIdEP7RpClumpi", &CClumpModelInfo_GetFrameFromId_hook, &CClumpModelInfo_GetFrameFromId);
-#endif
 
     CHook::InlineHook("_ZN13FxEmitterBP_c6RenderEP8RwCamerajfh", &FxEmitterBP_c__Render_hook, &FxEmitterBP_c__Render);
     CHook::InlineHook("_Z23RwResourcesFreeResEntryP10RwResEntry", &RwResourcesFreeResEntry_hook, &RwResourcesFreeResEntry);

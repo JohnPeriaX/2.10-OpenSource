@@ -6,8 +6,6 @@
 
 #define PADDING(x,y) uint8_t x[y]
 
-#define VER_2_1 true
-
 #define IN_VEHICLE(x) ((x->dwStateFlags & 0x100) >> 8)
 #define IS_CROUCHING(x) ((x->dwStateFlags >> 26) & 1)
 #define IS_FIRING(x) (x->bFiringWeapon)

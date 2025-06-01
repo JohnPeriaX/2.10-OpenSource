@@ -289,13 +289,18 @@ void CGame::UpdateGlobalTimer(uint32_t dwTimer)
 		*(uint32_t*)(g_libGTASA + 0x96B4D8) = dwTimer & 0x3FFFFFFF;
 	}
 }
+
 // 0.3.7
 void CGame::SetGravity(float fGravity)
 {
-#if VER_x32
-    CHook::UnFuck(g_libGTASA + (VER_2_1 ? 0x003FE810 : 0x3A0B64));
-    *(float*)(g_libGTASA + (VER_2_1 ? 0x003FE810 : 0x3A0B64)) = fGravity;
-#endif
+    float adjustedGravity = -fGravity;
+    uintptr_t gravityAddr = g_libGTASA + 0x75044C;
+
+    // ปลดล็อคหรือแก้ไข memory protection ก่อนเขียนค่า
+    CHook::UnFuck(gravityAddr, sizeof(float));
+
+    // เขียนค่าความโน้มถ่วงที่ปรับแล้วลงใน memory address นั้น
+    *reinterpret_cast<float*>(gravityAddr) = adjustedGravity;
 }
 
 bool CGame::IsGamePaused()
@@ -596,18 +601,17 @@ int CGame::GetLocalMoney()
 // 0.3.7
 void CGame::DisableEnterExits()
 {
-#if VER_x32
-    uintptr_t addr = *(uintptr_t*)(g_libGTASA + (VER_2_1 ? 0x007A1E20 : 0x700120));
-    int count = *(uint32_t*)(addr+8);
+    // สำหรับระบบ 64-bit เท่านั้น
+    uintptr_t addr = *(uintptr_t*)(g_libGTASA + 0x981F80);  // ที่อยู่ฐานในเวอร์ชัน 64-bit
+    int count = *(uint32_t*)(addr + 0x10);  // ออฟเซ็ตปรับแล้วสำหรับ 64-bit
 
     addr = *(uintptr_t*)addr;
 
-    for(int i=0; i<count; i++)
+    for(int i = 0; i < count; i++)
     {
-        *(uint16_t*)(addr+0x30) = 0;
-        addr += 0x3C;
+        *(uint16_t*)(addr + 0x48) = 0;  // ออฟเซ็ตปรับแล้วสำหรับ 64-bit
+        addr += 0x60;  // ขนาดโครงสร้างปรับแล้วสำหรับ 64-bit
     }
-#endif
 }
 
 void CGame::ToggleCJWalk(bool bUseCJWalk)
